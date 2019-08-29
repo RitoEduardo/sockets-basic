@@ -1,4 +1,7 @@
 const { io } = require('../server');
+const { TicketControl } = require('../classes/ticket-control');
+
+const tiketCtrl = new TicketControl();
 
 io.on('connection', (client) => {
 
