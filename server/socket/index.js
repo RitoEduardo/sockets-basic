@@ -1,40 +1,28 @@
 const { io } = require('../server');
 const { TicketControl } = require('../classes/ticket-control');
 
-const tiketCtrl = new TicketControl();
+const ticketCtrl = new TicketControl();
 
 io.on('connection', (client) => {
 
-    console.log("User conect");
-
-    const msgClient = {
-        user: "Fulanito",
-        message: "Bienvenido a mi aplicación, espero sea de tu agrado"
-    }
-
-    //client.emit("sendMsgServer", msgClient);
-
-    client.on('disconnect', () => {
-        console.log("Bye User");
+    client.emit('stateTicket', {
+        now: ticketCtrl.getLastTicket(),
+        lastFour: ticketCtrl.fnGetLastFour()
     });
+    client.on('nextTicket', callback => callback(ticketCtrl.next()));
 
-    //Escuchar cliente
-    client.on('sendMessage', (msg) => {
-        console.log("recibiendo", msg)
-    });
+    client.on('attendTicket', (data, callback) => {
+        if (!data.desk) {
+            return callback({
+                success: false,
+                message: "The desk is necesary"
+            });
+        }
+        client.emit('stateTicket', {
+            lastFour: ticketCtrl.fnGetLastFour()
+        });
+        callback(ticketCtrl.attendTicket(data.desk));
+        //Actualizar o notificar que se modificaron los últimos cuatro
+    })
 
-    //Escuchar y hacer algo con esa informacion
-    client.on('recordInfo', (msg, callBack) => {
-        console.log("Listening", msg)
-        setTimeout(() => {
-            callBack({ success: true, message: "Recorded OK!!!" });
-        }, 5000);
-
-    });
-
-    //Recibir brodcast
-    client.on('brodcastMsgServer', (msg) => {
-        console.log("brodcast data", msg);
-        client.broadcast.emit("brodcastMsgServer", msg);
-    });
 });
